@@ -54,17 +54,17 @@ float ising_lattice::sumAround(unsigned int I) const
 {
     float cumulative = 0.0;
     std::pair XY = indexToXY(I);
-    cumulative += spins[xyToIndex((XY.first + 1) % Nx, (XY.second) % Ny)];
-    cumulative += spins[xyToIndex((XY.first) % Nx, (XY.second + 1) % Ny)];
-    cumulative += spins[xyToIndex((XY.first - 1) % Nx, (XY.second) % Ny)];
-    cumulative += spins[xyToIndex((XY.first) % Nx, (XY.second - 1) % Ny)];
+    cumulative += spins[xyToIndex((XY.first + 1) % Nx, XY.second)];
+    cumulative += spins[xyToIndex(XY.first, (XY.second + 1) % Ny)];
+    cumulative += spins[xyToIndex((XY.first - 1 + Nx) % Nx, XY.second)];
+    cumulative += spins[xyToIndex(XY.first, (XY.second - 1 + Ny) % Ny)];
     return cumulative;
 }
 
 void ising_lattice::proposeFlip(unsigned int I)
 {
     std::uniform_real_distribution<float> distribution(0.0, 1.0);
-    float dE = std::min(std::exp(2.0 * J * spins[I] * sumAround(I)), 1.0);
+    float dE = std::min(std::exp(-2.0 * J * spins[I] * sumAround(I)), 1.0);
     if (dE > distribution(rng))
         spins[I] = -spins[I];
 }
