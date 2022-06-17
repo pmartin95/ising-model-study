@@ -36,8 +36,8 @@ float ising_lattice::hamiltonian() const
     for (unsigned int i = 0; i < Nsites; i++)
     {
         std::pair XY = indexToXY(i);
-        cumulative += spins[i] * spins[xyToIndex((XY.first + 1) % Nx, (XY.second) % Ny)];
-        cumulative += spins[i] * spins[xyToIndex((XY.first) % Nx, (XY.second + 1) % Ny)];
+        cumulative += spins[i] * spins[xyToIndex((XY.first + 1) % Nx, XY.second)];
+        cumulative += spins[i] * spins[xyToIndex(XY.first, (XY.second + 1) % Ny)];
     }
     return -J * cumulative;
 }
