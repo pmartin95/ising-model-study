@@ -10,7 +10,8 @@ private:
     std::vector<int> spins; // either 1 or -1
     rand_t rng;
     unsigned int Nx, Ny, Nsites;
-    float J;
+    unsigned int nAccept, nReject;
+    float J, beta;
 
     /*private methods*/
     unsigned int xyToIndex(unsigned int x, unsigned int y) const;
@@ -26,4 +27,11 @@ public:
     float magnetization() const;
     void sweep();
     void coldStart();
+
+    // Gets/Sets
+    float getAcceptance() const;
+    unsigned int getAccept() const;
+    unsigned int getReject() const;
+    void setJ(float jIn);
+    void setBeta(float betaIn);
 };

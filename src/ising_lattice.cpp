@@ -9,6 +9,8 @@ ising_lattice::ising_lattice(unsigned int x, unsigned int y)
     rng.seed(seedGen());
     for (int i = 0; i < Nsites; i++)
         spins.push_back(randomSpin(rng));
+    nAccept = 0;
+    nReject = 0;
 }
 
 ising_lattice::~ising_lattice()
@@ -64,9 +66,16 @@ float ising_lattice::sumAround(unsigned int I) const
 void ising_lattice::proposeFlip(unsigned int I)
 {
     std::uniform_real_distribution<float> distribution(0.0, 1.0);
-    float dE = std::min(std::exp(-2.0 * J * spins[I] * sumAround(I)), 1.0);
+    float dE = std::min(std::exp(-2.0 * J * beta * spins[I] * sumAround(I)), 1.0);
     if (dE > distribution(rng))
+    {
         spins[I] = -spins[I];
+        nAccept++;
+    }
+    else
+    {
+        nReject++;
+    }
 }
 
 void ising_lattice::sweep()
@@ -79,4 +88,26 @@ void ising_lattice::coldStart()
 {
     for (int i = 0; i < Nsites; i++)
         spins[i] = 1.0;
+}
+
+// Gets/Sets
+float ising_lattice::getAcceptance() const
+{
+    return static_cast<float>(nAccept) / static_cast<float>(nAccept + nReject);
+}
+unsigned int ising_lattice::getAccept() const
+{
+    return nAccept;
+}
+unsigned int ising_lattice::getReject() const
+{
+    return nReject;
+}
+void ising_lattice::setJ(float jIn)
+{
+    J = jIn;
+}
+void ising_lattice::setBeta(float betaIn)
+{
+    beta = betaIn;
 }
