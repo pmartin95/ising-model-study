@@ -3,46 +3,21 @@
 
 #include "ising_lattice.hpp"
 
-// Constructor for the `ising_lattice` class.
-// Initializes a lattice of size x by y.
-// @param x The width of the lattice.
-// @param y The height of the lattice.
-ising_lattice::ising_lattice(unsigned int x, unsigned int y)
+ising_lattice::ising_lattice(const std::vector<int> &dim)
 {
-    Nx = x; // Set the width of the lattice.
-    Ny = y; // Set the height of the lattice.
-    Nsites = Nx * Ny; // Calculate the total number of sites.
-    spins.reserve(Nsites); // Reserve space for spin values.
-    rng.seed(seedGen()); // Seed the random number generator.
+    latticeDimensions = dim;                                                     // Set the height of the lattice.
+    Nsites = std::accumulate(dim.begin(), dim.end(), 1, std::multiplies<int>()); // Calculate the total number of sites.
+    spins.reserve(Nsites);                                                       // Reserve space for spin values.
+    rng.seed(seedGen());                                                         // Seed the random number generator.
     for (int i = 0; i < Nsites; i++)
         spins.push_back(randomSpin(rng)); // Initialize spins randomly.
-    nAccept = 0; // Initialize accepted spin flips to zero.
-    nReject = 0; // Initialize rejected spin flips to zero.
+    nAccept = 0;                          // Initialize accepted spin flips to zero.
+    nReject = 0;                          // Initialize rejected spin flips to zero.
 }
 
 // Destructor for the `ising_lattice` class.
 ising_lattice::~ising_lattice()
 {
-}
-
-// Convert x, y coordinates to a linear index.
-// @param x The x-coordinate.
-// @param y The y-coordinate.
-// @return The linear index corresponding to the (x, y) coordinates.
-unsigned int ising_lattice::xyToIndex(unsigned int x, unsigned int y) const
-{
-    return Ny * x + y;
-}
-
-// Convert a linear index to x, y coordinates.
-// @param I The linear index.
-// @return A pair of unsigned ints representing the (x, y) coordinates.
-std::pair<unsigned int, unsigned int> ising_lattice::indexToXY(unsigned int I) const
-{
-    std::pair<unsigned int, unsigned int> result;
-    result.first = I / Ny; // Calculate the x-coordinate.
-    result.second = I % Ny; // Calculate the y-coordinate.
-    return result;
 }
 
 // Calculate the Hamiltonian (energy) of the lattice.
@@ -52,10 +27,14 @@ float ising_lattice::hamiltonian() const
     float cumulative = 0.0;
     for (unsigned int i = 0; i < Nsites; i++)
     {
-        std::pair XY = indexToXY(i);
+        std::vector<int> coordinates = getCoordinates(i);
         // Sum the interactions with right and down neighbors.
-        cumulative += spins[i] * spins[xyToIndex((XY.first + 1) % Nx, XY.second)];
-        cumulative += spins[i] * spins[xyToIndex(XY.first, (XY.second + 1) % Ny)];
+        for (int j = 0; j < latticeDimensions.size(); j++)
+        {
+            coordinates[j]++;
+            cumulative += spins[i] * spins[getLinearIndex(coordinates)];
+            coordinates[j]--;
+        }
     }
     return -J * cumulative; // Return the negative of the coupling constant times the cumulative sum.
 }
@@ -78,12 +57,15 @@ float ising_lattice::magnetization() const
 float ising_lattice::sumAround(unsigned int I) const
 {
     float cumulative = 0.0;
-    std::pair XY = indexToXY(I);
+    std::vector<int> coordinates = getCoordinates(I);
     // Sum the spins of the nearest neighbors.
-    cumulative += spins[xyToIndex((XY.first + 1) % Nx, XY.second)];
-    cumulative += spins[xyToIndex(XY.first, (XY.second + 1) % Ny)];
-    cumulative += spins[xyToIndex((XY.first - 1 + Nx) % Nx, XY.second)];
-    cumulative += spins[xyToIndex(XY.first, (XY.second - 1 + Ny) % Ny)];
+    for (int i = 0; i < coordinates.size(); i++)
+    {
+        coordinates[i] = (coordinates[i] + latticeDimensions[i] + 1) / latticeDimensions[i];
+        cumulative += spins[getLinearIndex(coordinates)];
+        coordinates[i] = (coordinates[i] + latticeDimensions[i] - 2) / latticeDimensions[i];
+        cumulative += spins[getLinearIndex(coordinates)];
+    }
     return cumulative;
 }
 
@@ -103,6 +85,40 @@ void ising_lattice::proposeFlip(unsigned int I)
     else
     {
         nReject++; // Increment the count of rejected flips.
+    }
+}
+
+unsigned int ising_lattice::getLinearIndex(const std::vector<int> &coords) const
+{
+    unsigned int index = 0;
+    unsigned int dimensionFactor = 1;
+    for (int i = 0; i < coords.size(); ++i)
+    {
+        index += coords[i] * dimensionFactor;
+        dimensionFactor *= latticeDimensions[i];
+    }
+    return index;
+}
+std::vector<int> ising_lattice::getCoordinates(unsigned int linearIndex) const
+{
+    std::vector<int> coords(latticeDimensions.size(), 0);
+
+    for (int i = 0; i < latticeDimensions.size(); ++i)
+    {
+        coords[i] = linearIndex % latticeDimensions[i];
+        linearIndex /= latticeDimensions[i];
+    }
+
+    return coords;
+}
+void ising_lattice::getCoordinates(unsigned int linearIndex, std::vector<int> coordinates) const
+{
+    coordinates = std::vector<int>(latticeDimensions.size(), 0);
+
+    for (int i = 0; i < latticeDimensions.size(); ++i)
+    {
+        coordinates[i] = linearIndex % latticeDimensions[i];
+        linearIndex /= latticeDimensions[i];
     }
 }
 

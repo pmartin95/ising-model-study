@@ -1,31 +1,36 @@
 #pragma once
 #include <vector>
 #include <utility>
+#include <cstdint>
+#include <numeric>
+#include <functional>
 #include "random.hpp"
 
 // The ising_lattice class models a 2D Ising model lattice.
-class ising_lattice {
+class ising_lattice
+{
 private:
-    std::vector<int> spins; // Stores the spin values (1 or -1) of each lattice site.
-    rand_t rng; // Random number generator for spin manipulation.
-    unsigned int Nx, Ny; // Dimensions of the lattice: Nx (width) and Ny (height).
-    unsigned int Nsites; // Total number of sites in the lattice (Nx * Ny).
+    std::vector<int8_t> spins; // Stores the spin values (1 or -1) of each lattice site.
+    rand_t rng;                // Random number generator for spin manipulation.
+    std::vector<int> latticeDimensions;
+    unsigned int Nsites;           // Total number of sites in the lattice (Nx * Ny).
     unsigned int nAccept, nReject; // Counters for accepted and rejected spin flips.
-    float J; // Coupling constant in the Ising model.
-    float beta; // Inverse temperature parameter in the Ising model.
+    float J;                       // Coupling constant in the Ising model.
+    float beta;                    // Inverse temperature parameter in the Ising model.
 
     // Converts 2D lattice coordinates (x, y) to a 1D array index.
-    unsigned int xyToIndex(unsigned int x, unsigned int y) const;
-    // Converts a 1D array index to 2D lattice coordinates (x, y).
-    std::pair<unsigned int, unsigned int> indexToXY(unsigned int I) const;
     // Sums the spins of neighboring sites around site I.
     float sumAround(unsigned int I) const;
     // Proposes a spin flip at site I and decides whether to accept it.
     void proposeFlip(unsigned int I);
 
+    unsigned int getLinearIndex(const std::vector<int> &coords) const;
+    std::vector<int> getCoordinates(unsigned int linearIndex) const;
+    void getCoordinates(unsigned int linearIndex, std::vector<int> coordinates) const;
+
 public:
     // Constructor: Initializes a lattice of size x by y.
-    ising_lattice(unsigned int x, unsigned int y);
+    ising_lattice(const std::vector<int> &dim);
     // Destructor: Currently not used but included for future scalability.
     ~ising_lattice();
 
