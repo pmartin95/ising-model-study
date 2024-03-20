@@ -1,4 +1,4 @@
-# The Ising Model in 2D
+# The Ising Model in N-Dimensions
 
 This project is a C++ demo I want to do to study the Ising model.
 
